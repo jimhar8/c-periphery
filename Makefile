@@ -6,6 +6,8 @@ OBJDIR = obj
 
 TEST_PROGRAMS = $(basename $(wildcard tests/*.c))
 
+DEBUG = -g
+
 ###########################################################################
 
 OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
