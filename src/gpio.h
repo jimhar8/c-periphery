@@ -25,6 +25,7 @@ enum gpio_error_code {
 typedef struct gpio_handle {
     unsigned int pin;
     int fd;
+    unsigned int edge;
 
     struct {
         int c_errno;

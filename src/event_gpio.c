@@ -93,49 +93,49 @@ int gpio_unexport(unsigned int gpio)
     return 0;
 }
 
-int gpio_set_direction(unsigned int gpio, unsigned int in_flag)
-{
-    int retry;
-    struct timespec delay;
-    int fd;
-    char filename[33];
+//int gpio_set_direction(unsigned int gpio, unsigned int in_flag)
+//{
+//    int retry;
+//    struct timespec delay;
+//    int fd;
+//    char filename[33];
+//
+//    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/direction", gpio);
+//
+//    // retry waiting for udev to set correct file permissions
+//    delay.tv_sec = 0;
+//    delay.tv_nsec = 10000000L; // 10ms
+//    for (retry=0; retry<100; retry++) {
+//        if ((fd = open(filename, O_WRONLY)) >= 0)
+//            break;
+//        nanosleep(&delay, NULL);
+//    }
+//    if (retry >= 100)
+//        return -1;
+//
+//    if (in_flag)
+//        write(fd, "in", 3);
+//    else
+//        write(fd, "out", 4);
+//
+//    close(fd);
+//    return 0;
+//}
 
-    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/direction", gpio);
-
-    // retry waiting for udev to set correct file permissions
-    delay.tv_sec = 0;
-    delay.tv_nsec = 10000000L; // 10ms
-    for (retry=0; retry<100; retry++) {
-        if ((fd = open(filename, O_WRONLY)) >= 0)
-            break;
-        nanosleep(&delay, NULL);
-    }
-    if (retry >= 100)
-        return -1;
-
-    if (in_flag)
-        write(fd, "in", 3);
-    else
-        write(fd, "out", 4);
-
-    close(fd);
-    return 0;
-}
-
-int gpio_set_edge(unsigned int gpio, unsigned int edge)
-{
-    int fd;
-    char filename[28];
-
-    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/edge", gpio);
-
-    if ((fd = open(filename, O_WRONLY)) < 0)
-        return -1;
-
-    write(fd, stredge[edge], strlen(stredge[edge]) + 1);
-    close(fd);
-    return 0;
-}
+//int gpio_set_edge(unsigned int gpio, unsigned int edge)
+//{
+//    int fd;
+//    char filename[28];
+//
+//    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/edge", gpio);
+//
+//    if ((fd = open(filename, O_WRONLY)) < 0)
+//        return -1;
+//
+//    write(fd, stredge[edge], strlen(stredge[edge]) + 1);
+//    close(fd);
+//    return 0;
+//}
 
 int open_value_file(unsigned int gpio)
 {
