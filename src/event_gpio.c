@@ -93,49 +93,49 @@ int gpio_unexport(unsigned int gpio)
     return 0;
 }
 
-//int gpio_set_direction(unsigned int gpio, unsigned int in_flag)
-//{
-//    int retry;
-//    struct timespec delay;
-//    int fd;
-//    char filename[33];
-//
-//    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/direction", gpio);
-//
-//    // retry waiting for udev to set correct file permissions
-//    delay.tv_sec = 0;
-//    delay.tv_nsec = 10000000L; // 10ms
-//    for (retry=0; retry<100; retry++) {
-//        if ((fd = open(filename, O_WRONLY)) >= 0)
-//            break;
-//        nanosleep(&delay, NULL);
-//    }
-//    if (retry >= 100)
-//        return -1;
-//
-//    if (in_flag)
-//        write(fd, "in", 3);
-//    else
-//        write(fd, "out", 4);
-//
-//    close(fd);
-//    return 0;
-//}
+int gpio_set_direction_event(unsigned int gpio, unsigned int in_flag)
+{
+    int retry;
+    struct timespec delay;
+    int fd;
+    char filename[33];
 
-//int gpio_set_edge(unsigned int gpio, unsigned int edge)
-//{
-//    int fd;
-//    char filename[28];
-//
-//    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/edge", gpio);
-//
-//    if ((fd = open(filename, O_WRONLY)) < 0)
-//        return -1;
-//
-//    write(fd, stredge[edge], strlen(stredge[edge]) + 1);
-//    close(fd);
-//    return 0;
-//}
+    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/direction", gpio);
+
+    // retry waiting for udev to set correct file permissions
+    delay.tv_sec = 0;
+    delay.tv_nsec = 10000000L; // 10ms
+    for (retry=0; retry<100; retry++) {
+        if ((fd = open(filename, O_WRONLY)) >= 0)
+            break;
+        nanosleep(&delay, NULL);
+    }
+    if (retry >= 100)
+        return -1;
+
+    if (in_flag)
+        write(fd, "in", 3);
+    else
+        write(fd, "out", 4);
+
+    close(fd);
+    return 0;
+}
+
+int gpio_set_edge_event(unsigned int gpio, unsigned int edge)
+{
+    int fd;
+    char filename[28];
+
+    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d/edge", gpio);
+
+    if ((fd = open(filename, O_WRONLY)) < 0)
+        return -1;
+
+    write(fd, stredge[edge], strlen(stredge[edge]) + 1);
+    close(fd);
+    return 0;
+}
 
 int open_value_file(unsigned int gpio)
 {
@@ -188,7 +188,7 @@ struct gpios *new_gpio(unsigned int gpio)
     }
     new_gpio->exported = 1;
 
-    if (gpio_set_direction(gpio,1) != 0) { // 1==input
+    if (gpio_set_direction_event(gpio,1) != 0) { // 1==input
         free(new_gpio);
         return NULL;
     }
@@ -377,7 +377,7 @@ void remove_edge_detect(unsigned int gpio)
     remove_callbacks(gpio);
 
     // btc fixme - check return result??
-    gpio_set_edge(gpio, NO_EDGE);
+    gpio_set_edge_event(gpio, NO_EDGE);
     g->edge = NO_EDGE;
 
     if (g->value_fd != -1)
@@ -427,6 +427,9 @@ void event_cleanup_all(void)
    event_cleanup(-666);
 }
 
+
+
+
 int add_edge_detect(unsigned int gpio, unsigned int edge, int bouncetime)
 // return values:
 // 0 - Success
@@ -444,7 +447,7 @@ int add_edge_detect(unsigned int gpio, unsigned int edge, int bouncetime)
         if ((g = new_gpio(gpio)) == NULL)
             return 2;
 
-        gpio_set_edge(gpio, edge);
+        gpio_set_edge_event(gpio, edge);
         g->edge = edge;
         g->bouncetime = bouncetime;
     } else if (i == edge) {  // get existing event
@@ -509,12 +512,12 @@ int blocking_wait_for_edge(unsigned int gpio, unsigned int edge, int bouncetime,
         if ((g = new_gpio(gpio)) == NULL) {
             return -2;
         }
-        gpio_set_edge(gpio, edge);
+        gpio_set_edge_event(gpio, edge);
         g->edge = edge;
         g->bouncetime = bouncetime;
     } else {    // ed != edge - event for a different edge
         g = get_gpio(gpio);
-        gpio_set_edge(gpio, edge);
+        gpio_set_edge_event(gpio, edge);
         g->edge = edge;
         g->bouncetime = bouncetime;
         g->initial_wait = 1;
