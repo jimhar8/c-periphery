@@ -51,6 +51,7 @@ struct gpios *gpio_list = NULL;
 struct callback
 {
     unsigned int gpio;
+    unsigned int event_count;
     void (*func)(unsigned int gpio);
     struct callback *next;
 };
@@ -61,6 +62,9 @@ int event_occurred[54] = { 0 };
 int thread_running = 0;
 int epfd_thread = -1;
 int epfd_blocking = -1;
+
+
+pthread_mutex_t lock_x;
 
 /************* /sys/class/gpio functions ************/
 int gpio_export(unsigned int gpio)
@@ -285,13 +289,38 @@ int callback_exists(unsigned int gpio)
     return 0;
 }
 
+// JJH: get count for gpio
+int get_count(unsigned int gpio)
+{
+    int value = 0;
+    
+    struct callback *cb = callbacks;
+    while (cb != NULL) {
+        if (cb->gpio == gpio)
+        {  
+            pthread_mutex_lock(&lock_x);
+            value =  cb->event_count;
+            cb->event_count = 0;
+            pthread_mutex_unlock(&lock_x);
+            return value;
+        }    
+        cb = cb->next;
+    }
+    return -1;
+}
+
 void run_callbacks(unsigned int gpio)
 {
     struct callback *cb = callbacks;
     while (cb != NULL)
     {
         if (cb->gpio == gpio)
-            cb->func(cb->gpio);
+        {    
+            //cb->func(cb->gpio);
+            pthread_mutex_lock(&lock_x);
+            cb->event_count = cb->event_count + 1;
+            pthread_mutex_unlock(&lock_x);
+        }    
         cb = cb->next;
     }
 }
@@ -471,7 +500,14 @@ int add_edge_detect(unsigned int gpio, unsigned int edge, int bouncetime)
         return 2;
     }
     g->thread_added = 1;
+    
+    if (!thread_running)
+    {    
+        /* initialize pthread mutex protecting "shared_x" */
+        pthread_mutex_init(&lock_x, NULL);
+    }
 
+    
     // start poll thread if it is not already running
     if (!thread_running) {
         if (pthread_create(&threads, NULL, poll_thread, (void *)t) != 0) {
